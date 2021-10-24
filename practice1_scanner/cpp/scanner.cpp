@@ -6,14 +6,9 @@ int main(int argc, char* argv[])
 {
 	if (argc == 1)
 	{
-		std::cerr<<"Usage: "<<argv[0]<<" FILE1 FILE2 ...\nAnalyze KPL source code and print out number of characters and digits.\n";
+		std::cerr<<"Usage: "<<argv[0]<<" FILE1 FILE2 ...\nAnalyze KPL source code and print out tokens & their types.\n";
 		return 1;
 	}
-
-	LexicalAnalyzer LA;
-
-	int digit=0;
-	int alpha=0;
 
 	for (int iii=1; iii<argc; ++iii)
 	{
@@ -22,18 +17,12 @@ int main(int argc, char* argv[])
 
 		try 
 		{	
-			LA.Scan(example);
-			while (LA.HasToken())
+			std::cout<<"All tokens in file "<<argv[iii]<<":\n";
+			auto tokens = LexicalAnalyzer::singleton()->Scan(example);
+
+			for (auto t: tokens)
 			{
-				std::string token = LA.Get();
-				for (auto t: token)
-				{
-					if (std::isdigit(t))
-						++digit;
-					if (std::isalpha(t))
-						++alpha;
-				}
-				LA.Next();
+				std::cout<<t->GetTokenType()<<": "<<t->ToString()<<"\n";
 			}
 		}
 		catch (const std::invalid_argument &e)
@@ -41,8 +30,6 @@ int main(int argc, char* argv[])
 			std::cerr<<"In file "<<argv[iii]<<": "<<e.what()<<'\n';
 		}
 	}
-
-	std::cout<<"Without comments, there are totally "<<digit<<" digits and "<<alpha<<" letters in those files\n";
 
 	return 0;
 } 

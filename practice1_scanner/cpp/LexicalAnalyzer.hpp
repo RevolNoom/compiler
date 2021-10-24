@@ -1,35 +1,30 @@
 /*
  * Break input into tokens
+ * OOP pattern: Singleton
  */
 #ifndef LEXICAL_ANALYZER_HPP
 #define LEXICAL_ANALYZER_HPP
 
+#include <unordered_map>
 #include <iostream>
-#include <string>
 #include <vector>
-#include <list>
+#include <string>
 
-// TODO: Create Token class
+#include "Token.hpp"
+#include "TokenData.hpp"
+#include "TokenSpecial.hpp"
+#include "TokenKeyword.hpp"
+
 class LexicalAnalyzer 
 {
 public:
-	LexicalAnalyzer();
+	static LexicalAnalyzer* singleton();
 
 	// Scan a stream of characters
-	// Throws std::invalid_argument if a character
-	// is not in KPL alphabet
-	void Scan(std::istream& input);
-
-	// Return true if there's some scanned token left 
-	// from the stream
-	bool HasToken() const;
-
-	// Discard current token and move to the next one 
-	void Next();
-
-	// Get the value of current token
-	std::string Get() const;
-
+	// Return a stream of Token
+	// If there's an error,
+	// throws std::invalid_argument 
+	TokenStream Scan(std::istream& input);
 
 private:
 
@@ -39,42 +34,30 @@ private:
 		// Can contain number & alpha
 		// Max 15 characters
 		// abc123 
-		void ScanIdentifier(std::istream& input);
+		shared_ptr<Token> ScanIdentifier(std::istream& input);
 
-		// All kinds of integers 
-		void ScanNumber(std::istream& input);
+		// Scan POSITIVE integers 
+		shared_ptr<Token> ScanNumber(std::istream& input);
 
-		// 'x' where x is a printable character between two ticks
-		void ScanCharConst(std::istream& input);
+		// 'x': a printable character between two ticks
+		shared_ptr<Token> ScanCharConst(std::istream& input);
 
-		// +-/*=,;)
-		void ScanSpecial(std::istream& input);
+		// +-/*=,;)><:.
+		// <=  >=  .)  :=
+		shared_ptr<Token> ScanSymbol(std::istream& input);
 
-		// Scan and ignore a bunch of characters 
-		// where each of them isspace() 
-		void ScanSpace(std::istream& input);
+		// All kind of spaces
+		shared_ptr<Token> ScanSpace(std::istream& input);
 
 		// !=
-		void ScanUnequal(std::istream& input);
+		shared_ptr<Token> ScanUnequal(std::istream& input);
 
 		//	(	or	(.		
-		//	If it's (* then discard the whole comment
-		void ScanLeftParenthesis(std::istream& input);
+		//	If it's (* then discard the whole comment upto *)
+		shared_ptr<Token> ScanLeftParenthesis(std::istream& input);
 
-		// . or .)
-		void ScanDot(std::istream& input);
-
-		// * or *)
-		void ScanAsterisk(std::istream& input);
-
-		// : or :=
-		void ScanColon(std::istream& input);
-
-		// <, >, <=, >=
-		void ScanComparison(std::istream& input); 
-
-		// Anything that's not in other Scan*()
-		void ScanIllegal(std::istream& input);
+		// Anything not in other Scan functions
+		shared_ptr<Token> ScanIllegal(std::istream& input);
 
 
 	// M I S C E L L A N E O U S
@@ -87,16 +70,21 @@ private:
 		// Use this instead of input.get()
 		int GetChar(std::istream& input);
 private:
-	std::list<std::string> _token;
-
+	LexicalAnalyzer();
+	static LexicalAnalyzer *_singleton;
+	
+private:
 	// Current position in the stream
 	int _line, _col;
 
+	// MAPPINGS
 
 	// A mapping between a char and its corresponding scan function
-	static std::vector<decltype(&LexicalAnalyzer::ScanIllegal)> ScanChar;
-	// Build ScanChar
-	static void InitScanChar();
+	vector<decltype(&LexicalAnalyzer::ScanIllegal)> _scanChar;
+
+	// Keywords - Token mapping
+	unordered_map<string, shared_ptr<Token>> _keyword;
+
 };
 
 #endif
