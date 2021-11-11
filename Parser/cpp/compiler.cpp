@@ -25,6 +25,7 @@ int main(int argc, char* argv[])
 		{
 			LexicalAnalyzer* LA = LexicalAnalyzer::Singleton();
 			auto tokenstream = LA->Scan(file);
+
 			Component::Program p;
 			p.Parse(tokenstream);
 		}

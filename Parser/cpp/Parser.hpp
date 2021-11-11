@@ -50,7 +50,7 @@ namespace ParserType
 
     protected:
         template<typename T>
-        shared_ptr<T> TheNextTokenIs(const TokenStream &ts) const
+        shared_ptr<T> ThisTokenIs(const TokenStream &ts) const
         {
             return ts.size()? dynamic_pointer_cast<T>(ts.front()) : nullptr;
         }
@@ -58,7 +58,7 @@ namespace ParserType
         template<typename T>
         void Eat(TokenStream &ts, string errorMsg) const
         {
-            if (!TheNextTokenIs<T>(ts))
+            if (!ThisTokenIs<T>(ts))
                 Throw(errorMsg, ts.front());
             std::cout<<" " + ts.front()->GetTokenType() + " ";
             ts.pop_front();

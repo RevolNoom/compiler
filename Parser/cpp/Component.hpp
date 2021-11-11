@@ -8,6 +8,7 @@
 
 #include <list>
 #include <stdexcept>
+#include <iostream>
 #include "Token.hpp"
 
 using namespace std;
@@ -17,11 +18,10 @@ namespace Component
     void Throw(std::string msg, shared_ptr<TokenType::Token> erroneousToken);
 
     template <typename T>
-    shared_ptr<T> TheNextTokenIs(const TokenStream::const_iterator &next)
+    shared_ptr<T> ThisTokenIs(const TokenStream::const_iterator &next)
     {
         return dynamic_pointer_cast<T>(*next);
     }
-
 
 
 
@@ -33,15 +33,30 @@ namespace Component
             Parse(ts.begin(), ts.end());
         }
 
-        virtual void Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end)  {}/// = 0; 
+        virtual TokenStream::const_iterator Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const = 0; 
     protected:
+
+        // Check if Iterator contains shared_ptr type T, and then move it forward
         template <typename T>
-        shared_ptr<T> Eat(TokenStream::const_iterator it, std::string errorMsg = std::string()) const
+        shared_ptr<T> Eat(TokenStream::const_iterator &it, std::string errorMsg) const
         {
-            auto token = TheNextTokenIs<T>(it);
+            auto token = EatIfPossible<T>(it);
             if (!token)
-                Throw(errorMsg, token);
-            ++it;
+                Throw(errorMsg, *it);
+            return token;
+        }
+
+        // If the next token is type T, then eat
+        // Lost interest if it's not
+        template <typename T>
+        shared_ptr<T> EatIfPossible(TokenStream::const_iterator &it) const
+        {
+            auto token = ThisTokenIs<T>(it);
+            if (token)
+            {
+                std::cout<<">>"<<(*it)->GetTokenType()<<"\n";
+                ++it;
+            }
             return token;
         }
     };
@@ -50,107 +65,204 @@ namespace Component
 
 
 
-    // BLOCK - RELATED 
+    // 
 
-            class Program: public ProgramComponent 
-            {
-            public:
-                virtual void Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) override;
-            };
 
-/*
+
+        // THOSE WHO LIVES BY THE LAW
+
         class ScopeDependent: public ProgramComponent
         {
-            void Parse(const TokenStream &ts);
         };
 
-        class Scope: public ScopeDependent 
-        {
-            void Parse(const TokenStream &ts);
-        };
+            // THOSE WHO MAKES THE LAW 
 
-            class Procedure: public Scope
+            class Scope: public ScopeDependent 
             {
-            public:
-                virtual void Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) override;
             };
 
-            class Function: public Scope
-            {
-            public:
-                virtual void Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) override;
-            };
+                class Program: public Scope 
+                {
+                public:
+                    // 2-hours debugging, and the vtable breaks because this line was missing
+                    using ProgramComponent::Parse;
+                    virtual TokenStream::const_iterator Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const override;
+                };
 
-            class BeginEnd: public Scope
-            {
-            public:
-                virtual void Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) override;
-            };
+                class Procedure: public Scope
+                {
+                public:
+                    using ProgramComponent::Parse;
+                    virtual TokenStream::const_iterator Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const override;
+                };
 
 
-        // Declarations
+                class Function: public Scope
+                {
+                public:
+                    using ProgramComponent::Parse;
+                    virtual TokenStream::const_iterator Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const override;
+                };
+
+
+        // DECLARATIONS
+
         class Declaration: public ProgramComponent 
         {
+        public:
+            using ProgramComponent::Parse;
+            virtual TokenStream::const_iterator Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const override;
         };
 
-            class DeclarationType: public Declaration
+            class DeclareType: public Declaration
             {
             public:
-                virtual void Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) override;
+                using ProgramComponent::Parse;
+                virtual TokenStream::const_iterator Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const override;
             };
 
-            class DeclarationConst: public Declaration
+            class DeclareConst: public Declaration
             {
             public:
-                virtual void Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) override;
+                using ProgramComponent::Parse;
+                virtual TokenStream::const_iterator Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const override;
             };
 
-            class DeclarationVar: public Declaration
+            class DeclareVar: public Declaration
             {
             public:
-                virtual void Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) override;
+                using ProgramComponent::Parse;
+                virtual TokenStream::const_iterator Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const override;
             };
 
+            class DeclareParam: public Declaration 
+            {
+            public:
+                using ProgramComponent::Parse;
+                virtual TokenStream::const_iterator Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const override;
+
+            };
+
+
+        // STATEMENTS
+
+        // Wrapper class
+        class Statement: public ScopeDependent
+        {
+        public:
+            using ProgramComponent::Parse;
+            virtual TokenStream::const_iterator Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const override;
+        };
+
+        // Statement's Wrapped classes
+        class ConcreteStatement: public ProgramComponent
+        {
+        };
+
+            class BeginEnd: public ConcreteStatement 
+            {
+            public:
+                using ProgramComponent::Parse;
+                virtual TokenStream::const_iterator Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const override;
+            };
+
+            class While: public ConcreteStatement 
+            {
+            public:
+                using ProgramComponent::Parse;
+                virtual TokenStream::const_iterator Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const override;
+            };
+
+            class For: public ConcreteStatement 
+            {
+            public:
+                using ProgramComponent::Parse;
+                virtual TokenStream::const_iterator Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const override;
+            };
+
+            class Call: public ConcreteStatement 
+            {
+            public:
+                using ProgramComponent::Parse;
+                virtual TokenStream::const_iterator Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const override;
+            };
+
+            class If: public ConcreteStatement 
+            {
+            public:
+                using ProgramComponent::Parse;
+                virtual TokenStream::const_iterator Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const override;
+            };
+            
+            class Assignment: public ConcreteStatement 
+            {
+            public:
+                using ProgramComponent::Parse;
+                virtual TokenStream::const_iterator Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const override;
+            };
 
     // DATAS
 
+        // Wrapper Class
         class Type: public ProgramComponent
         {
         public:
-            //virtual void Build(TokenStream::const_iterator begin, TokenStream::const_iterator end) override;
-            virtual void Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) override;
+            using ProgramComponent::Parse;
+            virtual TokenStream::const_iterator Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const override;
         };
 
-   //     class ConcreteType: public ProgramComponent
-    class Statement
-    {
-    public:
-        Statement();
+            // Wrapped Classes
 
-        //void Build(TokenStream::const_iterator begin, TokenStream::const_iterator end);
-        void Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end);
+            // Not currently needed 
+            // class Char
+            // class Integer
 
-    //    protected:
-    //        const shared_ptr<Component>& LookupIdent(shared_ptr<Identifier> id);
-    };
-    class DeclarationFunction
-    class BeginEnd
+            // Not fully implemented yet
+            // COMPOSITE
+            class Array: public ProgramComponent
+            {
+            public:
+                using ProgramComponent::Parse;
+                virtual TokenStream::const_iterator Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const override;
+            };
 
-    class Assignment
-    class CallProc
-    class IfElse
-    class While
-    class For
+        // EXPRESSION AND ITS MINIONS
 
-    class TypeBasic
-    class ParamList
+        class Term: public ScopeDependent
+        {
+        public:
+            using ProgramComponent::Parse;
+            virtual TokenStream::const_iterator Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const override;
+        };
 
+        class Factor: public ScopeDependent
+        {
+        public:
+            using ProgramComponent::Parse;
+            virtual TokenStream::const_iterator Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const override;
+        };
+
+        class Expression: public ScopeDependent
+        {
+        public:
+            using ProgramComponent::Parse;
+            virtual TokenStream::const_iterator Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const override;
+        };
+
+        // Not really a minion. Actually a client
+        class Condition: public ScopeDependent
+        {
+        public:
+            using ProgramComponent::Parse;
+            virtual TokenStream::const_iterator Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const override;
+        };
+/*
     class Condition
     class Expression
     class Factor: public ProgramComponent
     {
     public:
-        void Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end);
+        void Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const;
     
     private:
 

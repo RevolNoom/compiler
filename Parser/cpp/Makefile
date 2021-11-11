@@ -1,10 +1,10 @@
 CPP = g++
-CPPFLAGS = -g -Wall
+CPPFLAGS = -g -Wall --std=c++17
 
 compiler: Token.o compiler.o LexicalAnalyzer.o Component.o
 	$(CPP) $(CPPFLAGS) -o compiler Token.o compiler.o Component.o LexicalAnalyzer.o
 
-compiler.o: compiler.cpp LexicalAnalyzer.hpp
+compiler.o: compiler.cpp LexicalAnalyzer.hpp Component.hpp
 	$(CPP) $(CPPFLAGS) -c compiler.cpp -o compiler.o  
 
 Component.o: Component.cpp Component.hpp
