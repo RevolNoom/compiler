@@ -83,7 +83,7 @@ TokenStream::const_iterator Component::DeclareConst::Parse(TokenStream::const_it
 
                 if (! (EatIfPossible<TokenType::Identifier>(begin) ||
                         EatIfPossible<TokenType::Identifier>(begin)))
-                        Throw("A weird constant value detected.", *begin);
+                        Throw("Invalid Constant.", *begin);
             }
             
             Eat<TokenType::Semicolon>(begin, "Missing semicolon."); 

@@ -16,9 +16,5 @@ LexicalAnalyzer.o: LexicalAnalyzer.hpp LexicalAnalyzer.cpp
 Token.o: Token.cpp Token.hpp
 	$(CPP) $(CPPFLAGS) -c Token.cpp -o Token.o  
 
-Token.hpp Token.cpp: GenEverything.bash
-	./GenEverything.bash
-
-
 clean:
 	rm -f *.o *~

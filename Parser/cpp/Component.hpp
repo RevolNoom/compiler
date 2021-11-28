@@ -256,19 +256,6 @@ namespace Component
             using ProgramComponent::Parse;
             virtual TokenStream::const_iterator Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const override;
         };
-/*
-    class Condition
-    class Expression
-    class Factor: public ProgramComponent
-    {
-    public:
-        void Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const;
-    
-    private:
-
-        shared_ptr<Component> _Factor
-    }
-    */
 }
 
 #endif
