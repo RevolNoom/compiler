@@ -14,8 +14,7 @@ void Component::Throw(std::string msg, shared_ptr<TokenType::Token> erroneousTok
     throw std::invalid_argument(msg);
 }
 
-//void Component::Program::Parse(const TokenStream &ts){}
-TokenStream::const_iterator Component::Program::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const
+TokenStream::const_iterator Component::Program::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end)
 {
 	std::cout<<"Parsing Program\n";
 
@@ -38,7 +37,7 @@ TokenStream::const_iterator Component::Program::Parse(TokenStream::const_iterato
     return begin;
 }
 
-TokenStream::const_iterator Component::Declaration::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const
+TokenStream::const_iterator Component::Declaration::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end)
 {
 	std::cout<<"Parse Declarations (Block)\n";
 
@@ -59,7 +58,7 @@ TokenStream::const_iterator Component::Declaration::Parse(TokenStream::const_ite
     return begin;
 }
 
-TokenStream::const_iterator Component::DeclareConst::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const
+TokenStream::const_iterator Component::DeclareConst::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end)
 {
     std::cout<<"Parsing Const Declaration\n";
 
@@ -82,7 +81,8 @@ TokenStream::const_iterator Component::DeclareConst::Parse(TokenStream::const_it
                 (EatIfPossible<TokenType::Plus>(begin) || EatIfPossible<TokenType::Minus>(begin)); 
 
                 if (! (EatIfPossible<TokenType::Identifier>(begin) ||
-                        EatIfPossible<TokenType::Identifier>(begin)))
+                       EatIfPossible<TokenType::Number>(begin)     || 
+                       EatIfPossible<TokenType::Letter>(begin)))
                         Throw("Invalid Constant.", *begin);
             }
             
@@ -98,7 +98,7 @@ TokenStream::const_iterator Component::DeclareConst::Parse(TokenStream::const_it
     return begin;
 }
 
-TokenStream::const_iterator Component::DeclareType::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const
+TokenStream::const_iterator Component::DeclareType::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end)
 {
     std::cout<<"Parsing Types Declaration.\n";
 
@@ -113,7 +113,7 @@ TokenStream::const_iterator Component::DeclareType::Parse(TokenStream::const_ite
 
             Eat<TokenType::Assign>(begin, "Missing assign symbol.");
 
-            auto type = make_shared<Type>();
+            auto type = make_shared<FullType>();
             begin = type->Parse(begin, end);
 
             Eat<TokenType::Semicolon>(begin, "Missing semicolon.");
@@ -128,7 +128,7 @@ TokenStream::const_iterator Component::DeclareType::Parse(TokenStream::const_ite
 }
 
 
-TokenStream::const_iterator Component::DeclareVar::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const
+TokenStream::const_iterator Component::DeclareVar::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end)
 {
 	std::cout<<"Parse Var Declaration.\n";
 
@@ -143,7 +143,7 @@ TokenStream::const_iterator Component::DeclareVar::Parse(TokenStream::const_iter
 
             Eat<TokenType::Colon>(begin, "Missing colon \':\'.");
 
-            auto type = make_shared<Type>();
+            auto type = make_shared<FullType>();
             begin = type->Parse(begin, end);
 
             Eat<TokenType::Semicolon>(begin, "Missing semicolon."); 
@@ -158,7 +158,7 @@ TokenStream::const_iterator Component::DeclareVar::Parse(TokenStream::const_iter
     return begin;
 }
 
-TokenStream::const_iterator Component::Procedure::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const
+TokenStream::const_iterator Component::Procedure::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end)
 {
 	std::cout<<"Parse Procedure Declaration\n";
 
@@ -189,7 +189,7 @@ TokenStream::const_iterator Component::Procedure::Parse(TokenStream::const_itera
 }
 
 
-TokenStream::const_iterator Component::Function::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const
+TokenStream::const_iterator Component::Function::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end)
 {
 	std::cout<<"Parse Function Declaration\n";
 
@@ -205,9 +205,8 @@ TokenStream::const_iterator Component::Function::Parse(TokenStream::const_iterat
 
         Eat<TokenType::Colon>(begin, "Missing Colon ':' before return type.");
 
-        if (! (EatIfPossible<TokenType::Char>(begin) || 
-               EatIfPossible<TokenType::Integer>(begin)))
-            Throw("Return type must be a basic type (Integer, Char).", *begin);
+        auto bstype = make_shared<BasicType>();
+        begin = bstype->Parse(begin, end);
 
         Eat<TokenType::Semicolon>(begin, "Missing Semicolon.");
 
@@ -221,7 +220,7 @@ TokenStream::const_iterator Component::Function::Parse(TokenStream::const_iterat
     return begin;
 }
 
-TokenStream::const_iterator Component::BeginEnd::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const
+TokenStream::const_iterator Component::BeginEnd::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end)
 {
 	std::cout<<"Parse Begin-End\n";
 
@@ -241,25 +240,25 @@ TokenStream::const_iterator Component::BeginEnd::Parse(TokenStream::const_iterat
 }
 
 
-TokenStream::const_iterator Component::Type::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const
+TokenStream::const_iterator Component::FullType::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end)
 {
-    std::cout<<"Parsing Type\n";
-    if (! (EatIfPossible<TokenType::Char>(begin) ||
-            EatIfPossible<TokenType::Integer>(begin) ||
-            EatIfPossible<TokenType::Identifier>(begin)))
-    {
-        // Not Char, not Integer, not even close to user-defined type
-        // Then it must be array
-        auto a = make_shared<Component::Array>();
-        begin = a->Parse(begin, end);
-    }
+    std::cout<<"Parsing FullType\n";
 
-    std::cout<<"Type Parsed\n";
+    // Try pinning which type is this
+    shared_ptr<Type> type = make_shared<BasicType>();
+    if (ThisTokenIs<TokenType::Identifier>(begin))
+        type = make_shared<Alias>();
+    else if (ThisTokenIs<TokenType::Array>(begin))
+        type = make_shared<Component::Array>();
+        
+    begin = type->Parse(begin, end);
+
+    std::cout<<"FullType Parsed\n";
     return begin;
 }
 
 
-TokenStream::const_iterator Component::Array::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const
+TokenStream::const_iterator Component::Array::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end)
 {
     std::cout<<"Parsing Array\n";
 
@@ -269,7 +268,7 @@ TokenStream::const_iterator Component::Array::Parse(TokenStream::const_iterator 
     Eat<TokenType::ArrayIndexClose>(begin, "Missing array index symbol '.)'");
     Eat<TokenType::Of>(begin, "Missing keyword Of");
 
-    auto type = make_shared<Type>();
+    auto type = make_shared<FullType>();
     begin = type->Parse(begin, end);
 
     std::cout<<"Array Parsed\n";
@@ -277,7 +276,7 @@ TokenStream::const_iterator Component::Array::Parse(TokenStream::const_iterator 
 }
 
 
-TokenStream::const_iterator Component::DeclareParam::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const
+TokenStream::const_iterator Component::DeclareParam::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end)
 {
     std::cout<<"Parsing ParamList\n";
 
@@ -290,9 +289,8 @@ TokenStream::const_iterator Component::DeclareParam::Parse(TokenStream::const_it
             Eat<TokenType::Identifier>(begin, "Missing Identifier.");
             Eat<TokenType::Colon>(begin, "Missing colon ':'.");
             
-            if (! (EatIfPossible<TokenType::Integer>(begin) ||
-                    EatIfPossible<TokenType::Char>(begin)))
-                    Throw("Parameters must be basic type (Integer, Char)", *begin);
+            auto bstype = make_shared<BasicType>();
+            begin = bstype->Parse(begin, end);
 
             // Closing parenthesis means no more parameters
             if (!EatIfPossible<TokenType::Semicolon>(begin))
@@ -307,7 +305,7 @@ TokenStream::const_iterator Component::DeclareParam::Parse(TokenStream::const_it
 }
 
 
-TokenStream::const_iterator Component::If::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const
+TokenStream::const_iterator Component::If::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end)
 {
     std::cout<<"Parsing If\n";
 
@@ -333,7 +331,7 @@ TokenStream::const_iterator Component::If::Parse(TokenStream::const_iterator beg
 }
 
 
-TokenStream::const_iterator Component::While::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const
+TokenStream::const_iterator Component::While::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end)
 {
     std::cout<<"Parsing While\n";
 
@@ -352,7 +350,7 @@ TokenStream::const_iterator Component::While::Parse(TokenStream::const_iterator 
     return begin;
 }
 
-TokenStream::const_iterator Component::For::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const
+TokenStream::const_iterator Component::For::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end)
 {
     std::cout<<"Parsing For\n";
 
@@ -376,7 +374,7 @@ TokenStream::const_iterator Component::For::Parse(TokenStream::const_iterator be
     return begin;
 }
 
-TokenStream::const_iterator Component::Call::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const
+TokenStream::const_iterator Component::Call::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end)
 {
     std::cout<<"Parsing Call\n";
 
@@ -400,7 +398,7 @@ TokenStream::const_iterator Component::Call::Parse(TokenStream::const_iterator b
     return begin;
 }
 
-TokenStream::const_iterator Component::Assignment::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const
+TokenStream::const_iterator Component::Assignment::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end)
 {
     std::cout<<"Parsing Assignment\n";
 
@@ -418,7 +416,16 @@ TokenStream::const_iterator Component::Assignment::Parse(TokenStream::const_iter
     return begin;
 }
 
-TokenStream::const_iterator Component::Factor::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const
+
+TokenStream::const_iterator Component::EmptyStatement::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end)
+{
+    std::cout<<"Parsing Empty Statement\nEmpty Statement Parsed\n";
+    return begin;
+}
+
+
+
+TokenStream::const_iterator Component::Factor::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end)
 {
     std::cout<<"Parsing Factor\n";
     
@@ -454,7 +461,7 @@ TokenStream::const_iterator Component::Factor::Parse(TokenStream::const_iterator
     return begin;
 }
 
-TokenStream::const_iterator Component::Term::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const
+TokenStream::const_iterator Component::Term::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end)
 {
     std::cout<<"Parsing Term\n";
     auto factor = make_shared<Factor>();
@@ -468,7 +475,7 @@ TokenStream::const_iterator Component::Term::Parse(TokenStream::const_iterator b
     return begin;
 }
 
-TokenStream::const_iterator Component::Expression::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const
+TokenStream::const_iterator Component::Expression::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end)
 {
     std::cout<<"Parsing Expression\n";
 
@@ -488,11 +495,12 @@ TokenStream::const_iterator Component::Expression::Parse(TokenStream::const_iter
     return begin;
 }
 
-TokenStream::const_iterator Component::Statement::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const
+TokenStream::const_iterator Component::Statement::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end)
 {
     std::cout<<"Parsing Statement\n";
     
-    shared_ptr<ProgramComponent> concreteStatement;
+    shared_ptr<ProgramComponent> concreteStatement = make_shared<EmptyStatement>();
+
     if (ThisTokenIs<TokenType::If>(begin))
         concreteStatement = make_shared<If>();
     else if (ThisTokenIs<TokenType::Call>(begin))
@@ -506,16 +514,30 @@ TokenStream::const_iterator Component::Statement::Parse(TokenStream::const_itera
     else if (ThisTokenIs<TokenType::Begin>(begin))
         concreteStatement = make_shared<BeginEnd>();
 
-    // Parse if statement is not null
-    if (concreteStatement)
-        begin = concreteStatement->Parse(begin, end);
+    begin = concreteStatement->Parse(begin, end);
 
     std::cout<<"Statement Parsed\n";
     return begin;
 }
 
 
-TokenStream::const_iterator Component::Condition::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end) const
+// T Y P E S
+TokenStream::const_iterator Component::BasicType::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end)
+{
+    if (! (EatIfPossible<TokenType::Char>(begin) ||
+            EatIfPossible<TokenType::Integer>(begin)))
+        Throw("Not a basic type", *begin);
+    return begin;
+}
+
+TokenStream::const_iterator Component::Alias::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end)
+{
+    if (! EatIfPossible<TokenType::Identifier>(begin))
+        Throw("Not an Identifier of Alias type", *begin);
+    return begin;
+}
+
+TokenStream::const_iterator Component::Condition::Parse(TokenStream::const_iterator begin, TokenStream::const_iterator end)
 {
     std::cout<<"Parsing Condition\n";
 

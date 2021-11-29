@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
 			auto tokenstream = LA->Scan(file);
 
 			Component::Program p;
-			p.Parse(tokenstream);
+			p.ParseStream(tokenstream);
 		}
 		catch (const std::exception &e)
 		{
