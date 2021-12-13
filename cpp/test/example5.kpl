@@ -1,0 +1,23 @@
+Program SumSquare; 
+VAR	I: INTEGER;
+	N: INTEGER;
+	Sum: INTEGER;
+
+FUNCTION Square(Base: INTEGER): INTEGER;
+BEGIN
+	Square := Base * Base;
+END; 
+
+
+BEGIN	(* Program SumSquare *)
+	CALL READI(I);	(* Read an integer from user *)
+	Sum:=0;
+	For N:= 1 TO I DO
+		Sum := Sum + Square(N);
+
+	CALL WRITEI(Sum) (* Output result to the user *)
+END
+.
+
+
+

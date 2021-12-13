@@ -1,0 +1,25 @@
+Program Example2; (* Factorial *)
+   
+Var n : Integer;
+Const n1 := 1;
+Var n2 : Integer;
+Const n3 := 2;
+
+Function F(n : Integer) : Integer;
+Var n : Integer;
+Const n1 := 1;
+Type T := Integer;
+Var n2 : Integer;
+Const n3 := 2;
+Type T2 := Char;
+  Begin
+    If n = 0 Then F := 1 Else F := N * F (N - 1);
+  End;
+
+Begin
+  For n := 1 To 7 Do
+    Begin
+      Call WriteLn;
+      Call WriteI(F(i));
+    End;
+End. (* Factorial *)

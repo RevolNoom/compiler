@@ -1,0 +1,37 @@
+Program LowTriMat;	(*Lower Triangle Matrix*)
+Var	Col: Integer;
+	Row: Integer;
+
+	IsLTM: Integer;
+
+	I: Integer;
+	J: Integer;
+
+	Matrix: Array (.100.) Of Array (.100.) Of Integer;
+
+Begin
+	(* Read Matrix Dimensions *)
+	Call ReadI(Col);
+	Call ReadI(Row);
+
+	(* Read Matrix *)
+	For I:= 1 to Col-1 do
+		For J:= 0 to Row-2 do
+		Begin
+			If Matrix(.I.)(.J.) != 0 then
+				IsLTM:=0;
+		End;
+
+	
+	(* Check LTM *)
+	IsLTM:=1;
+	For I:= 1 to Col-1 do
+		For J:= 0 to Row-2 do
+		Begin
+			If Matrix(.I.)(.J.) != 0 then
+				IsLTM:=0;
+		End;
+	
+	Call PrintI(IsLTM);
+End.
+

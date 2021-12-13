@@ -1,8 +1,0 @@
-Program SumTwoInt;	
-Var	First: Integer;
-	Second: Integer;
-Begin
-	Call ReadI(First);
-	Call ReadI(Second);
-	Call PrintI(First+Second);
-End.
